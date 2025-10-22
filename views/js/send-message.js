@@ -1,6 +1,7 @@
 let foundUsersFull = []; // เก็บไว้ส่งข้อความภายหลัง [{ userId, prefix, accessToken }]
 let uploadedImageURL = null;
 let lookupInterval;
+let isUploadingImage = false;
 
 window.addEventListener("beforeunload", async () => {
   try {
@@ -69,16 +70,17 @@ async function handleImageSelect(event) {
       return;
     }
 
-    // ✅ แสดงพรีวิวเบลอ + overlay ก่อนอัปโหลด
+    // แสดงพรีวิวเบลอ + overlay ก่อนอัปโหลด
     const reader = new FileReader();
     reader.onload = async function (e) {
       uploadedImageURL = e.target.result;
       previewImg.src = uploadedImageURL;
       previewWrapper.style.display = 'block';
       previewWrapper.classList.add('loading'); // เปิดโหมดโหลด
+      isUploadingImage = true;
 
       try {
-        // ✅ เริ่มอัปโหลดไฟล์
+        // เริ่มอัปโหลดไฟล์
         const formData = new FormData();
         formData.append('image', file);
 
@@ -91,7 +93,7 @@ async function handleImageSelect(event) {
         const data = await response.json();
 
         if (response.ok && data.success) {
-          console.log("✅ อัปโหลดสำเร็จ:", data);
+          console.log("อัปโหลดสำเร็จ:", data);
           previewWrapper.classList.remove('loading'); // ลบเบลอออก
           previewImg.title = `ID: ${data.fileId || ''}`;
         } else {
@@ -103,6 +105,8 @@ async function handleImageSelect(event) {
         previewImg.src = '';
         previewWrapper.style.display = 'none';
         uploadedImageURL = null;
+      } finally {
+        isUploadingImage = false;
       }
     };
 
@@ -111,6 +115,7 @@ async function handleImageSelect(event) {
     console.error('❌ General error:', err);
     alert('เกิดข้อผิดพลาดในการจัดการไฟล์');
     event.target.value = '';
+    isUploadingImage = false;
   }
 }
 
@@ -297,35 +302,40 @@ async function sendMessageToFoundUsers(event) {
     await Promise.all(batchPromises);
   }
 
-  // เคลียร์รูปและข้อความหลังส่งเสร็จ
-  uploadedImageURL = null;
-
-  const previewImg = document.getElementById("preview-img");
-  const previewWrapper = document.getElementById("preview-image");
-  if (previewImg) previewImg.src = "";
-  if (previewWrapper) previewWrapper.style.display = "none";
-
-  const messageInput = document.getElementById("message");
-  if (messageInput) messageInput.value = "";
-
-  // ปลดล็อคปุ่มหลังส่งเสร็จ
+  // ปลดล็อกปุ่มส่ง + เคลียร์ข้อมูล input ทั้งหมด
   if (sendButton) {
     sendButton.disabled = false;
     sendButton.textContent = "ส่งข้อความ";
     sendButton.style.opacity = "1";
     sendButton.style.cursor = "pointer";
   }
+
+  // เคลียร์ข้อความใน textarea
+  const messageBox = document.getElementById("message");
+  if (messageBox) messageBox.value = "";
+
+  // เคลียร์รูปภาพที่ preview
+  const previewImg = document.getElementById("preview-img");
+  const previewWrapper = document.getElementById("preview-image");
+  if (previewImg) previewImg.src = "";
+  if (previewWrapper) previewWrapper.style.display = "none";
+
+  // รีเซ็ต input file ให้พร้อมเลือกไฟล์ใหม่ได้
+  const fileInput = document.getElementById("imageUpload");
+  if (fileInput) fileInput.value = "";
+
+  // ล้างตัวแปรอ้างอิงรูปเก่า
+  uploadedImageURL = null;
 }
 
 const sendingIntervals = new Map();
 
-// 🕒 เวลาปัจจุบัน (HH:mm:ss)
 function getCurrentTime() {
   const now = new Date();
   return now.toTimeString().slice(0, 8);
 }
 
-// 🧩 สร้าง log แถวใหม่
+// สร้าง log แถวใหม่
 function createLogRow(username, userId, statusText, statusClass) {
   const tbody = document.getElementById("logBody");
   const row = document.createElement("tr");
@@ -344,12 +354,10 @@ function createLogRow(username, userId, statusText, statusClass) {
   return { state, shop };
 }
 
-/* 🟡 เริ่ม “กำลังส่ง…” ต่อ user (มีอนิเมชัน . .. ... ) */
 function startUserSending(username, userId) {
   const frames = ["กำลังส่ง.", "กำลังส่ง..", "กำลังส่ง..."];
   let i = 0;
 
-  // ✅ ส่งพารามิเตอร์ครบทั้ง 5 ตัวให้ตรงกับ createLogRow()
   const { state, shop } = createLogRow( username, userId, frames[i], "log-status--sending");
 
   const interval = setInterval(() => {
@@ -360,7 +368,6 @@ function startUserSending(username, userId) {
   sendingIntervals.set(userId, { interval, state, shop });
 }
 
-/* 🟢 ส่งสำเร็จ */
 function markUserSuccess(userId, shopName) {
   const it = sendingIntervals.get(userId);
   if (!it) return;
@@ -371,7 +378,6 @@ function markUserSuccess(userId, shopName) {
   sendingIntervals.delete(userId);
 }
 
-/* 🔴 ส่งไม่สำเร็จ */
 function markUserFail(userId) {
   const it = sendingIntervals.get(userId);
   if (!it) return;
