@@ -229,7 +229,7 @@ async function sendMessageToFoundUsers(event) {
   if (event) event.preventDefault();
 
   if (isUploadingImage) {
-    alert("⚠️ กำลังอัปโหลดรูปภาพอยู่ โปรดรอสักครู่...");
+    alert("กำลังอัปโหลดรูปภาพอยู่ โปรดรอสักครู่...");
     return;
   }
 
