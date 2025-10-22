@@ -311,9 +311,9 @@ app.get("/api/slip-results", async (req, res) => {
 export async function loadShopData() {
   try {
     shopData = await Shop.find().lean(); // ดึงจาก MongoDB แล้วเก็บในตัวแปร global
+    console.log(`✅ โหลดร้านค้าสำเร็จ ${shopData.length} ร้าน`);
   } catch (error) {
-    console.error("❌ ไม่สามารถโหลดร้านค้าจาก MongoDB:", error.message);
-    broadcastLog(`❌ ไม่สามารถโหลดร้านค้าจาก MongoDB: ${error.message}`);
+    console.error("❌ ไม่สามารถโหลดร้านค้าจาก MongoDB:", error?.stack || error);
     shopData = [];
   }
 }
@@ -331,39 +331,33 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body || {};
+  const { owner, admins, marketing } = await loadCredentialsFromDB();
+
   let role = null;
 
-  try {
-    const credentials = await loadCredentialsFromDB();
-
-    if (
-      username === credentials.owner.username &&
-      password === credentials.owner.password
-    ) {
-      role = "owner";
-    } else {
-      const admin = credentials.admins.find(
-        (a) => a.username === username && a.password === password
-      );
-      if (admin) role = "user";
-
-      const marketing = credentials.marketing.find(
-        (m) => m.username === username && m.password === password
-      );
-      if (marketing) role = "marketing";
-    }
-
-    if (role) {
-      req.session.user = { username, role };
-      return res.redirect("/");
-    }
-
-    return res.redirect("/login?error=1");
-  } catch (error) {
-    console.error("❌ Login error:", error);
-    return res.redirect("/login?error=1");
+  // ✅ ตรวจสอบสิทธิ์
+  if (owner.username === username && owner.password === password) {
+    role = "OWNER";
+  } else if (admins.some(a => a.username === username && a.password === password)) {
+    role = "ADMIN";
+  } else if (marketing.some(m => m.username === username && m.password === password)) {
+    role = "MARKETING";
   }
+
+  if (role) {
+    // ✅ เก็บข้อมูล session เฉพาะที่จำเป็น
+    req.session.user = {
+      username,
+      role,
+      loginAt: Date.now()
+    };
+
+    console.log(`✅ Login สำเร็จ: ${username} (${role}) → sessionID: ${req.sessionID}`);
+    return res.redirect("/");
+  }
+
+  return res.redirect("/login?error=1");
 });
 
 // Route: logout
@@ -1011,7 +1005,7 @@ app.post('/api/set-webhook', async (req, res) => {
   }
 });
 
-app.get('/uploaded-image', async (req, res) => {
+app.get('/api/uploaded-image', async (req, res) => {
   try {
     const { username, sessionId } = req.query;
     if (!username) return res.status(400).send('Missing params');
@@ -1029,7 +1023,7 @@ app.get('/uploaded-image', async (req, res) => {
   }
 });
 
-app.delete("/delete-my-upload", async (req, res) => {
+app.delete("/api/delete-my-upload", async (req, res) => {
   const sessionId = req.sessionID;
 
   if (!sessionId) {
@@ -1045,7 +1039,7 @@ app.delete("/delete-my-upload", async (req, res) => {
   }
 });
 
-app.post('/user-lookup-batch', async (req, res) => {
+app.post('/api/user-lookup-batch', async (req, res) => {
   const { usernames } = req.body;
   if (!Array.isArray(usernames) || usernames.length === 0) {
     return res.json({ results: [] });
@@ -1083,7 +1077,7 @@ app.post('/user-lookup-batch', async (req, res) => {
   }
 });
 
-app.post('/send-message', uploadsendimage.fields([{ name: 'image', maxCount: 1 }]), async (req, res) => {
+app.post('/api/send-message', uploadsendimage.fields([{ name: 'image', maxCount: 1 }]), async (req, res) => {
     const { userId, message } = req.body;
     const sessionId = req.sessionID;
     const username = req.session?.user?.username;
@@ -1200,7 +1194,7 @@ app.post('/send-message', uploadsendimage.fields([{ name: 'image', maxCount: 1 }
     }
 });
 
-app.post("/upload-send-image-line", uploadsendimage.single("image"), async (req, res) => {
+app.post("/api/upload-send-image-line", uploadsendimage.single("image"), async (req, res) => {
   try {
     // ปฏิเสธทันทีหากไม่มีไฟล์
     if (!req.file || !req.file.buffer) {
