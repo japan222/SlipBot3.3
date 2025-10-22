@@ -228,6 +228,11 @@ function extractUserIds(rawInput) {
 async function sendMessageToFoundUsers(event) {
   if (event) event.preventDefault();
 
+  if (isUploadingImage) {
+    alert("⚠️ กำลังอัปโหลดรูปภาพอยู่ โปรดรอสักครู่...");
+    return;
+  }
+
   const message = document.getElementById("message")?.value?.trim();
   const sendButton = document.querySelector(".btn.sending");
 
