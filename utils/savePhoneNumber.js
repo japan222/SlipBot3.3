@@ -45,7 +45,7 @@ export async function checkAndUpdatePhoneNumber(phoneNumber, userId, prefix) {
 }
 
 // ตรวจจับและบันทึกเบอร์โทรใหม่ลง MongoDB พร้อม prefix
-export async function checkAndSavePhoneNumber(text, userId, prefix) {
+export async function checkAndSavePhoneNumber(text, userId, prefix, linename) {
   const phoneMatch = text.match(/\b(06|08|09)\d{8}\b/);
   if (!phoneMatch) return;
 
@@ -63,6 +63,7 @@ export async function checkAndSavePhoneNumber(text, userId, prefix) {
       phoneNumber,
       prefix,
       user,
+      linename,
     });
 
     broadcastPhoneUpdate(userId, phoneNumber, lineName);

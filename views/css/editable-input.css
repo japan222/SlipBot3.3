@@ -1,0 +1,40 @@
+/* CSS สำหรับ contenteditable div */
+.editable-input {
+  width: 100%;
+  height: 150px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  box-sizing: border-box;
+  background-color: #fff !important;
+  outline: none;
+}
+
+/* Placeholder สำหรับ contenteditable div */
+.editable-input:empty:before {
+  content: attr(data-placeholder);
+  color: #8f8f8f;
+  white-space: pre-wrap;
+  pointer-events: none;
+}
+
+/* เมื่อ focus */
+.editable-input:focus {
+  border-color: #8f8f8f;
+}
+
+/* แก้ไข span ภายใน contenteditable ให้แสดง inline ปกติ */
+.editable-input span {
+  display: inline;
+  line-height: inherit;
+}
+
+/* ป้องกัน selection ผิดปกติ */
+.editable-input * {
+  vertical-align: baseline;
+}

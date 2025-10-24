@@ -13,7 +13,7 @@ import { reportResultToAPI } from "../utils/slipResultManager.js";
 import { broadcastLog } from "../index.js";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
-import timezone from 'dayjs/plugin/timezone.js'; 
+import timezone from 'dayjs/plugin/timezone.js';
 
 
 dayjs.extend(utc);
@@ -53,7 +53,7 @@ export async function handleTextEvent(event, client, prefix, linename, accessTok
     const phoneMatch = mergedText.match(/0[689]\d{8}/);
     if (phoneMatch) {
       const phoneNumber = phoneMatch[0].slice(0, 10);
-      await checkAndSavePhoneNumber(phoneNumber, userId, prefix);
+      await checkAndSavePhoneNumber(phoneNumber, userId, prefix, linename);
       return;
     }
 

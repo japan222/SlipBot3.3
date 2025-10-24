@@ -100,12 +100,24 @@
 }
 
 .user-not-found {
-  font-size: 15px;
-  margin-left: 10px;
-  margin-top: 8px;
-  text-overflow: ellipsis;
-  white-space: normal;
-  word-break: break-word;
+  display: block;
+  padding-left: 10px;
+  padding-top: 5px;
+  color: gray;
+  font-size: 14px !important;
+  font-weight: bold;
+  font-family: '"Prompt", sans-serif', monospace;
+  line-height: 1.6;
+}
+
+.user-not-found button {
+  padding-left: 15px;
+  color: black;
+  border: none;
+  cursor: pointer;
+  font-size: 14px !important;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
 .btn.lookup {
@@ -319,10 +331,6 @@
     min-width: 350px;
   }
 
-  .user-not-found {
-    font-size: 10px;
-  }
-
   .sending-btn-wrapper,
   .lookup-btn-wrapper {
     justify-content: center;
@@ -339,3 +347,67 @@
 }
 
 
+
+/* Overlay ����Ѻ�ʴ��յ���ѡ��� textarea */
+.textarea-color-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px;
+  border: 1px solid transparent;
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  background: transparent;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.form-group.small {
+  position: relative;
+}
+
+#userId {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+/* Overlay ����Ѻ�ʴ��յ���ѡ��� textarea */
+.textarea-color-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px;
+  border: 1px solid transparent;
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  background: transparent;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.form-group.small {
+  position: relative;
+}
+
+#userId {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}

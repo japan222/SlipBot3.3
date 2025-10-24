@@ -1,3 +1,5 @@
+
+
 <div class="send-message-page">
   <h1 class="page-title">ส่งข้อความ Line</h1>
   <div class="send-message-container">
@@ -8,9 +10,12 @@
       <!-- 🔍 ช่องกรอก userId -->
       <div class="form-group small">
         <label for="userId">ผู้รับ:</label>
-        <textarea id="userId" name="userId" maxlength="2000" rows="8" cols="50" placeholder="กรอกรหัสผู้ใช้ เช่น JPN1231234 JPN1231235
-
-* เพิ่มความรวดเร็ว กรอกไม่เกิน 150 รายการ" required></textarea>
+        <div 
+          id="userId" 
+          contenteditable="true" 
+          class="editable-input" 
+          data-placeholder="กรอกรหัสผู้ใช้ เช่น JPN1231234 JPN1231235&#10;&#10;* เพิ่มความรวดเร็ว กรอกไม่เกิน 150 รายการ"
+        ></div>
 
       <!-- ✅ ปุ่มค้นหา อยู่ตรงกลาง -->
       <div class="lookup-btn-wrapper">
@@ -60,5 +65,15 @@
         </table>
       </div>
   </div>
+
+  <!-- Modal แสดงรายชื่อ User ที่ไม่พบ -->
+  <div id="notFoundUsersModal" class="notfound-modal" style="display: none;">
+    <div class="notfound-modal-content">
+      <span class="close" onclick="closeNotFoundUsersModal()">&times;</span>
+      <h3 id="notFoundUsersCount" style="margin-bottom: 15px;">ไม่พบ USER</h3>
+      <div id="notFoundUsersList"></div>
+    </div>
+  </div>
+
 <script src="/views/js/send-message.js"></script>
 

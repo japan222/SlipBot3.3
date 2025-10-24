@@ -3,6 +3,33 @@ let uploadedImageURL = null;
 let lookupInterval;
 let isUploadingImage = false;
 
+// จัดการ placeholder สำหรับ contenteditable div
+const userIdInput = document.getElementById('userId');
+if (userIdInput) {
+  userIdInput.addEventListener('input', function() {
+    // ถ้าลบจนหมด ให้เคลียร์ innerHTML เพื่อแสดง placeholder
+    if (this.textContent.trim() === '' || this.innerHTML.trim() === '<br>') {
+      this.innerHTML = '';
+    }
+  });
+  
+  userIdInput.addEventListener('blur', function() {
+    // ตรวจสอบอีกครั้งเมื่อคลิกออก
+    if (this.textContent.trim() === '' || this.innerHTML.trim() === '<br>') {
+      this.innerHTML = '';
+    }
+  });
+  
+  // ป้องกันการวาง HTML/formatting จาก copy-paste
+  userIdInput.addEventListener('paste', function(e) {
+    e.preventDefault();
+    // ดึงเฉพาะ plain text
+    const text = (e.clipboardData || window.Clipboard).getData('text/plain');
+    // วางเป็น plain text สีดำเท่านั้น
+    document.execCommand('insertText', false, text);
+  });
+}
+
 window.addEventListener("beforeunload", async () => {
   try {
     // ใช้ session cookie อัตโนมัติ (เพราะมี credentials: 'include' อยู่แล้ว)
@@ -142,7 +169,7 @@ function stopLookupAnimation() {
 
 async function lookupUser() {
   const input = document.getElementById("userId");
-  const rawInput = input?.value?.trim();
+  const rawInput = (input.textContent || input.innerText || "").trim();
 
   const lookupStatus = document.getElementById("lookup-status");
   const userNotFound = document.getElementById("user-not-found");
@@ -194,11 +221,27 @@ async function lookupUser() {
     lookupStatus.innerHTML = `พบ USER : <span style="color:${color}">${foundCount} / ${userList.length}</span> คน`;
 
     if (notFoundUsers.length > 0) {
-      const displayLimit = 24;
+      const displayLimit = 22;
       const shownUsers = notFoundUsers.slice(0, displayLimit);
-      const result = "ไม่พบ USER : " + shownUsers.join(", ") + (notFoundUsers.length > displayLimit ? " ..." : "");
-      userNotFound.textContent = result;
-      userNotFound.style.color = "gray";
+
+      // สร้างข้อความแสดงผล
+      let result = "ไม่พบ USER: " + shownUsers.join(", ");
+
+      userNotFound.innerHTML = result;
+
+      // สร้างปุ่ม "... ดูทั้งหมด" เฉพาะเมื่อมีมากกว่า 3 รายการ
+      if (notFoundUsers.length > 3) {
+        const viewAllBtn = document.createElement('button');
+        viewAllBtn.textContent = ' ... ดูทั้งหมด';
+        viewAllBtn.onclick = () => showAllNotFoundUsers(notFoundUsers);
+        userNotFound.appendChild(viewAllBtn);
+      }
+      
+      // เปลี่ยนสีตัวอักษรที่ไม่เจอเป็นสีแดง
+      highlightNotFoundUsers(input, rawInput, notFoundUsers);
+    } else {
+      // ถ้าเจอหมด ให้แสดงข้อความปกติ (ไม่มีสี)
+      input.textContent = rawInput;
     }
 
   } catch (err) {
@@ -206,6 +249,74 @@ async function lookupUser() {
     lookupStatus.textContent = "เกิดข้อผิดพลาดระหว่างค้นหา";
     lookupStatus.style.color = "red";
   }
+}
+
+// ฟังก์ชันเปิด Modal แสดงรายชื่อ user ที่ไม่พบทั้งหมด
+function showAllNotFoundUsers(notFoundUsers) {
+  const modal = document.getElementById("notFoundUsersModal");
+  const listContainer = document.getElementById("notFoundUsersList");
+  const countText = document.getElementById("notFoundUsersCount");
+  
+  // อัปเดตจำนวน
+  countText.textContent = `ไม่พบ USER ทั้งหมด ${notFoundUsers.length} คน`;
+  
+  // สร้างรายการ
+  listContainer.innerHTML = notFoundUsers.map(user => 
+    `<div style="padding: 4px 8px; border-bottom: 1px solid #eee;">${user}</div>`
+  ).join('');
+  
+  // แสดง Modal
+  modal.style.display = "block";
+}
+
+// ฟังก์ชันปิด Modal
+function closeNotFoundUsersModal() {
+  document.getElementById("notFoundUsersModal").style.display = "none";
+}
+
+// ปิด Modal เมื่อคลิกนอกกรอบ
+window.addEventListener('click', function(event) {
+  const modal = document.getElementById("notFoundUsersModal");
+  if (event.target === modal) {
+    closeNotFoundUsersModal();
+  }
+});
+
+// ฟังก์ชันสำหรับ highlight username ที่ไม่เจอด้วยสีแดง
+function highlightNotFoundUsers(element, originalText, notFoundUsers) {
+  // สร้าง Set ของ username ที่ไม่เจอ
+  const notFoundSet = new Set(notFoundUsers.map(u => u.toUpperCase()));
+  
+  // แยก username ทั้งหมด
+  const allUsernames = extractUserIds(originalText);
+  
+  // แบ่งข้อความเป็นบรรทัด
+  const lines = originalText.toUpperCase().split('\n');
+  
+  // ประมวลผลแต่ละบรรทัด
+  const processedLines = lines.map(line => {
+    let processedLine = escapeHtml(line);
+    
+    allUsernames.forEach(username => {
+      const upperUsername = username.toUpperCase();
+      if (notFoundSet.has(upperUsername) && line.includes(upperUsername)) {
+        const regex = new RegExp(`\\b${upperUsername}\\b`, 'g');
+        processedLine = processedLine.replace(regex, `<span style="color:red;display:inline;">${upperUsername}</span>`);
+      }
+    });
+    
+    return processedLine;
+  });
+  
+  // รวมบรรทัดกลับมาด้วย <br> เพื่อรักษาการขึ้นบรรทัดใหม่
+  element.innerHTML = processedLines.join('\n');
+}
+
+// ฟังก์ชัน escape HTML เพื่อป้องกัน XSS
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 function extractUserIds(rawInput) {
