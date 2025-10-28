@@ -433,9 +433,10 @@ async function forwardNormalSlip({
     firstSent: new Date()
   };
 
-  if (shop.slipCheckOption === "duplicate") {
-    console.log('ร้านเปิดการตอบเฉพาะสลิปวนซ้ำ');
-  }
+if (shop.slipCheckOption === "duplicate") {
+  console.log('ร้านเปิดการตอบเฉพาะสลิปวนซ้ำ');
+  return;
+}
 
   if (shop.slipCheckOption === "all") {
     const slipData = await handleRegularSlip(

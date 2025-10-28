@@ -665,7 +665,7 @@ async function handleReply(userId, event, replyToken, client, category, prefix, 
             status: "ข้อความ",
             userId,
             prefix,
-            reply: replyGreeting
+            reply: replyOffensive
           });
           return;
         }
