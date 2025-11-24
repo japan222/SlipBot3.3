@@ -1350,13 +1350,16 @@ export const restartWebhooks = async () => {
   await setupWebhooks();           // รีเซ็ต webhook
 };
 
-(async () => {
-  await connectDB();
-  await loadBankAccounts();        // รอโหลดให้เสร็จก่อนบอททำงาน
-  await setupWebhooks();           // รอ setup ให้เสร็จแน่ ๆ
+app.listen(PORT, async () => {
+  console.log(`🟢 Server started at port ${PORT}`);
+  broadcastLog(`🟢 Server started at port ${PORT}`);
 
-  app.listen(PORT, () => {
-    console.log(`🟢 กำลังทำงานที่พอร์ต ${PORT}`);
-    broadcastLog(`🟢 กำลังทำงานที่พอร์ต ${PORT}`);
-  });
-})();
+  try {
+    await connectDB();
+    await loadBankAccounts();
+    await setupWebhooks();
+    console.log("All services initialized");
+  } catch (err) {
+    console.error("Initialization failed:", err);
+  }
+});
